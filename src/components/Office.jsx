@@ -1,17 +1,20 @@
+
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import LibraryButton from './LibraryButton'
 
 function Office() {
-    const [officeName, setOfficeName] = useState("");
-    const [officeNumber, setOfficeNumber] = useState("");
+    const [roomNumber, setRoomNumber] = useState('')
+    const [offices, setOffices] = useState([])
+
+    const API_URL = 'http://localhost:8082/api/offices'
 
     async function getOffices() {
         try {
-            const response = await axios.get('http://localhost:8082/api/offices/offices')
+            const response = await axios.get(API_URL)
             setOffices(response.data)
         } catch (error) {
-            alert("could not load offices")
+            console.error('Error loading offices:', error)
+            alert('Could not load offices')
         }
     }
 
@@ -20,45 +23,84 @@ function Office() {
     }, [])
 
     async function saveOffice() {
+        if (!roomNumber.trim()) {
+            alert('Please enter a room number')
+            return
+        }
+
         try {
-            const response = await axios.post('http://localhost:8082/api/offices/save', {
-                name: officeName,
-                officeNumber: Number(officeNumber),
+            await axios.post(API_URL, {
+                roomNumber: roomNumber.trim()
             })
-            if (response.status == 200) {
-                alert("The office is saved successfully")
-                getOffices()
-            } else {
-                alert("office not saved")
-            }
+
+            alert('Office saved successfully!')
+            setRoomNumber('')
+            getOffices()
         } catch (error) {
-            alert("office not saved: " + (error.response ? error.response.data : error.message))
+            console.error('Error saving office:', error)
+            alert(
+                'Office not saved: ' +
+                (error.response?.data?.message || error.message)
+            )
         }
     }
 
-    async function deleteOffice(offNumber) {
+    async function deleteOffice(id) {
         try {
-            const response = await axios.delete('http://localhost:8082/api/offices/deleteByNumber/' + offNumber)
-            if (response.status == 200) {
-                alert("The office is deleted successfully")
-                getOffices()
-            } else {
-                alert("office not deleted")
-            }
+            await axios.delete(`${API_URL}/${id}`)
+            alert('Office deleted successfully!')
+            getOffices()
         } catch (error) {
-            alert("office not deleted: " + (error.response ? error.response.data : error.message))
+            console.error('Error deleting office:', error)
+            alert('Office not deleted: ' + error.message)
         }
     }
 
     return (
         <div>
-            <h1>SAVE OFFICE</h1>
-            <label>Office Name:</label>
-            <input type="text" onChange={e => setOfficeName(e.target.value)} />
-            <label>Office Number:</label>
-            <input type="number" onChange={e => setOfficeNumber(e.target.value)} />
-            <LibraryButton buttonLabel="SAVE" onClickButton={saveOffice} />
+            <h1>OFFICE MANAGEMENT</h1>
 
+            <label>Room Number:</label>
+            <input
+                type="text"
+                value={roomNumber}
+                onChange={e => setRoomNumber(e.target.value)}
+                placeholder="Enter room number"
+            />
+
+            <button onClick={saveOffice}>SAVE OFFICE</button>
+
+            <h2>Saved Offices</h2>
+
+            {offices.length === 0 ? (
+                <p>No offices available.</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Room Number</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {offices.map(office => (
+                            <tr key={office.id}>
+                                <td>{office.id}</td>
+                                <td>{office.roomNumber}</td>
+                                <td>
+                                    <button
+                                        onClick={() => deleteOffice(office.id)}
+                                    >
+                                        DELETE
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
     )
 }
