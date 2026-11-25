@@ -5,8 +5,13 @@ import { useEffect, useState } from 'react'
 function Office() {
     const [roomNumber, setRoomNumber] = useState('')
     const [offices, setOffices] = useState([])
-
+    const [searchTerm, setSearchTerm] = useState('')
     const API_URL = 'http://localhost:8082/api/offices'
+    const filteredOffices = offices.filter(office =>
+    office.roomNumber
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+)
 
     async function getOffices() {
         try {
@@ -72,8 +77,15 @@ function Office() {
 
             <h2>Saved Offices</h2>
 
-            {offices.length === 0 ? (
-                <p>No offices available.</p>
+<input
+    type="text"
+    value={searchTerm}
+    onChange={e => setSearchTerm(e.target.value)}
+    placeholder="Search by room number..."
+/>
+
+            {filteredOffices.length === 0 ? (
+                <p>No matching offices found.</p>
             ) : (
                 <table>
                     <thead>
@@ -85,7 +97,7 @@ function Office() {
                     </thead>
 
                     <tbody>
-                        {offices.map(office => (
+                        {filteredOffices.map(office => (
                             <tr key={office.id}>
                                 <td>{office.id}</td>
                                 <td>{office.roomNumber}</td>
